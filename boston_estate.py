@@ -81,15 +81,40 @@ for i in range(k):
     history=model.fit(partial_train_data,partial_train_targets,
                         validation_data=(val_data,val_targets),
                         epochs=num_epochs,batch_size=1,verbose=0)
-    mae_history=history.history['val_mean_absolute_error']
+    mae_history=history.history['val_mae']
     all_mae_histories.append(mae_history)
 
 #Kod 3.29 K-fold doğrulama skorlarının ortalamasını almak
 average_mae_history=[np.mean([x[i] for x in all_mae_histories]) for i in range(num_epochs)]
 
-#Kod 3.30 Doğrulama skorlarını çizdirmek.
+#Kod 3.30 Doğrulama skorlarını çizdirmek. (Figure_1.png)
 plt.plot(range(1,len(average_mae_history)+1),average_mae_history)
 plt.xlabel('Epoklar')
 plt.ylabel("MAE-(Doğrulama)")
 plt.show()
+
+#Kod 3.31 Grafikte görülen farklı olan ilk 10 nokta veriden ayrılmıştır.
+#Her noktayı önceki noktaların kayar ortalaması(moving average) olarak göstererek yumuşak bir eğri çizdirelim.
+
+def smooth_curve(points, factor=0.9):
+  smoothed_points = []
+  for point in points:
+    if smoothed_points:
+      previous = smoothed_points[-1]
+      smoothed_points.append(previous * factor + point * (1 - factor))
+    else:
+      smoothed_points.append(point)
+  return smoothed_points
+
+smooth_mae_history = smooth_curve(average_mae_history[10:])
+
+plt.plot(range(1, len(smooth_mae_history) + 1), smooth_mae_history)
+plt.xlabel('Epochs')
+plt.ylabel('Validation MAE')
+plt.show()
+
+
+
+
+
 
