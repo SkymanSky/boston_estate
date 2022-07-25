@@ -4,6 +4,7 @@ import pandas as pd
 from keras import models
 from keras import layers
 import numpy as np
+import matplotlib.pyplot as plt
 
 (train_data,train_targets),(test_data,test_targets)=boston_housing.load_data()
 
@@ -46,7 +47,7 @@ def build_model():
 #Kod 3.27 K-fold Doğrulama
 k=4
 num_val_samples=len(train_data)//k
-num_epochs=80
+"""num_epochs=80
 all_scores=[]
 for i in range(k):
     print('processing fold #',i)
@@ -64,7 +65,31 @@ for i in range(k):
     all_scores.append(val_mae)
 
 print(all_scores)
-print(f'{num_epochs} için oralama mae skoru: {np.mean(all_scores)}')
+print(f'{num_epochs} için oralama mae skoru: {np.mean(all_scores)}')"""
 
+#Kod 3.28 Her parçada doğrulama günlüğünü kaydetmek
+num_epochs=500
+all_mae_histories=[]
 
+for i in range(k):
+    print('processing fold #',i)
+    val_data=train_data[i*num_val_samples:(i+1)*num_val_samples]
+    val_targets=train_targets[i*num_val_samples:(i+1)*num_val_samples]
+    partial_train_data=np.concatenate([train_data[:i*num_val_samples],train_data[(i+1)*num_val_samples:]],axis=0)
+    partial_train_targets=np.concatenate([train_targets[:i*num_val_samples],train_targets[(i+1)*num_val_samples:]],axis=0)
+    model=build_model()
+    history=model.fit(partial_train_data,partial_train_targets,
+                        validation_data=(val_data,val_targets),
+                        epochs=num_epochs,batch_size=1,verbose=0)
+    mae_history=history.history['val_mean_absolute_error']
+    all_mae_histories.append(mae_history)
+
+#Kod 3.29 K-fold doğrulama skorlarının ortalamasını almak
+average_mae_history=[np.mean([x[i] for x in all_mae_histories]) for i in range(num_epochs)]
+
+#Kod 3.30 Doğrulama skorlarını çizdirmek.
+plt.plot(range(1,len(average_mae_history)+1),average_mae_history)
+plt.xlabel('Epoklar')
+plt.ylabel("MAE-(Doğrulama)")
+plt.show()
 
